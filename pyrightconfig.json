@@ -1,0 +1,9 @@
+{
+  "include": ["app", "scripts"],
+  "exclude": ["**/node_modules", "**/__pycache__", "data", "checkpoints"],
+  "reportMissingImports": "none",
+  "reportMissingModuleSource": "none",
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic"
+}
+

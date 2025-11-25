@@ -1,0 +1,41 @@
+# GPU 학습용 Dockerfile
+FROM pytorch/pytorch:2.2.0-cuda11.8-cudnn8-runtime
+
+# 작업 디렉토리 설정
+WORKDIR /app
+
+# 시스템 의존성 설치
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libpq-dev \
+    libsndfile1 \
+    libsndfile1-dev \
+    ffmpeg \
+    libavcodec-extra \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python 의존성 설치 (PyTorch는 이미 설치됨)
+COPY requirements.txt .
+RUN pip install --no-cache-dir \
+    fastapi uvicorn python-multipart \
+    sqlalchemy asyncpg alembic \
+    boto3 pydantic pydantic-settings \
+    librosa soundfile audioread \
+    opencv-python-headless pandas scikit-learn \
+    matplotlib seaborn tqdm loguru pyyaml python-dotenv
+
+# 애플리케이션 코드 복사
+COPY . .
+
+# 체크포인트 및 로그 디렉토리 생성
+RUN mkdir -p checkpoints logs
+
+# 포트 노출
+EXPOSE 8000
+
+# 기본 명령 (학습용)
+CMD ["python", "scripts/train.py", "--data_dir", "data", "--epochs", "100"]
+

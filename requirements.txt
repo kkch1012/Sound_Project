@@ -1,0 +1,60 @@
+# FastAPI
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+
+# Database
+sqlalchemy==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# AWS
+boto3==1.34.34
+
+# Settings
+pydantic==2.6.1
+pydantic-settings==2.1.0
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.4
+httpx==0.26.0
+
+# ============================================
+# Machine Learning & Deep Learning
+# ============================================
+
+# PyTorch (CUDA 11.8 버전, CPU만 사용시 아래 주석 해제)
+torch==2.2.0
+torchaudio==2.2.0
+# torch==2.2.0+cpu  # CPU only version
+
+# Audio Processing
+librosa==0.10.1
+soundfile==0.12.1
+audioread==3.0.1
+
+# Scientific Computing
+numpy==1.26.4
+scipy==1.12.0
+
+# Image Processing (스펙트로그램 리사이징용)
+opencv-python-headless==4.9.0.80
+
+# Data Processing
+pandas==2.2.0
+scikit-learn==1.4.0
+
+# Visualization (학습 모니터링)
+matplotlib==3.8.3
+seaborn==0.13.2
+
+# Progress Bar
+tqdm==4.66.2
+
+# Configuration
+python-dotenv==1.0.1
+pyyaml==6.0.1
+
+# Logging
+loguru==0.7.2
