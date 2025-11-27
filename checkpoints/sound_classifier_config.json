@@ -1,0 +1,47 @@
+{
+  "num_classes": 14,
+  "label_to_idx": {
+    "braking state/normal_brakes": 0,
+    "braking state/worn_out_brakes": 1,
+    "idle state/combined": 2,
+    "idle state/combined/no oil_serpentine belt": 3,
+    "idle state/combined/power steering combined_no oil": 4,
+    "idle state/combined/power steering combined_no oil_serpentine belt": 5,
+    "idle state/combined/power steering combined_serpentine belt": 6,
+    "idle state/low_oil": 7,
+    "idle state/normal_engine_idle": 8,
+    "idle state/power_steering": 9,
+    "idle state/serpentine_belt": 10,
+    "startup state/bad_ignition": 11,
+    "startup state/dead_battery": 12,
+    "startup state/normal_engine_startup": 13
+  },
+  "idx_to_label": {
+    "0": "braking state/normal_brakes",
+    "1": "braking state/worn_out_brakes",
+    "2": "idle state/combined",
+    "3": "idle state/combined/no oil_serpentine belt",
+    "4": "idle state/combined/power steering combined_no oil",
+    "5": "idle state/combined/power steering combined_no oil_serpentine belt",
+    "6": "idle state/combined/power steering combined_serpentine belt",
+    "7": "idle state/low_oil",
+    "8": "idle state/normal_engine_idle",
+    "9": "idle state/power_steering",
+    "10": "idle state/serpentine_belt",
+    "11": "startup state/bad_ignition",
+    "12": "startup state/dead_battery",
+    "13": "startup state/normal_engine_startup"
+  },
+  "state_labels": {
+    "braking state": 0,
+    "idle state": 1,
+    "startup state": 2
+  },
+  "model_type": "cnn",
+  "input_shape": [
+    128,
+    216
+  ],
+  "test_accuracy": 16.908212560386474,
+  "test_loss": 2.584489209311349
+}
