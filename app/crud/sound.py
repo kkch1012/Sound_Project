@@ -26,7 +26,7 @@ async def get_sounds(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[
     result = await db.execute(
         select(Sound).offset(skip).limit(limit).order_by(Sound.created_at.desc())
     )
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def delete_sound(db: AsyncSession, sound_id: int) -> bool:
