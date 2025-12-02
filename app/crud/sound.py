@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from typing import List, Optional
 
 from app.models.sound import Sound
@@ -31,10 +31,9 @@ async def get_sounds(db: AsyncSession, skip: int = 0, limit: int = 100) -> List[
 
 async def delete_sound(db: AsyncSession, sound_id: int) -> bool:
     """사운드 삭제"""
-    sound = await get_sound(db, sound_id)
-    if sound:
-        await db.delete(sound)
-        await db.flush()
-        return True
-    return False
+    result = await db.execute(
+        delete(Sound).where(Sound.id == sound_id)
+    )
+    await db.flush()
+    return result.rowcount > 0
 

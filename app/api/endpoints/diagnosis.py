@@ -1,10 +1,9 @@
 """
 차량 사운드 진단 API 엔드포인트
 """
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Optional
-from enum import Enum
 import tempfile
 from pathlib import Path
 

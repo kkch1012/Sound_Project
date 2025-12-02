@@ -78,24 +78,4 @@ class S3Service:
             return None
         except Exception:
             return None
-    
-    async def get_presigned_url(self, s3_url: str, expiration: int = 3600) -> str:
-        """사전 서명된 URL 생성 (비공개 파일 접근용)"""
-        try:
-            key = self._extract_key_from_url(s3_url)
-            if not key:
-                raise HTTPException(status_code=400, detail="유효하지 않은 S3 URL")
-            
-            presigned_url = self.s3_client.generate_presigned_url(
-                "get_object",
-                Params={"Bucket": self.bucket_name, "Key": key},
-                ExpiresIn=expiration,
-            )
-            return presigned_url
-            
-        except ClientError as e:
-            raise HTTPException(
-                status_code=500,
-                detail=f"사전 서명 URL 생성 실패: {str(e)}"
-            )
 

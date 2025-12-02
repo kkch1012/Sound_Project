@@ -14,10 +14,6 @@ class SoundCreate(SoundBase):
     pass
 
 
-class SoundUpdate(BaseModel):
-    filename: Optional[str] = None
-
-
 class SoundResponse(SoundBase):
     id: int
     created_at: datetime
