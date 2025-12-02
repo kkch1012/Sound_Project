@@ -154,6 +154,8 @@ docker-compose down
 
 ## 개발 환경 (Docker 없이)
 
+### 1. 가상환경 생성 및 활성화
+
 ```bash
 # 가상환경 생성
 python -m venv venv
@@ -163,11 +165,21 @@ venv\Scripts\activate
 
 # 가상환경 활성화 (Linux/Mac)
 source venv/bin/activate
+```
 
-# 의존성 설치
+### 2. 의존성 설치
+
+```bash
+# 기본 패키지 설치
 pip install -r requirements.txt
 
-# 서버 실행
+# Jupyter 노트북 사용 시 (선택사항)
+pip install -r requirements_ml.txt
+```
+
+### 3. 서버 실행
+
+```bash
 uvicorn app.main:app --reload
 ```
 
