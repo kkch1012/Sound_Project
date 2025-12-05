@@ -57,7 +57,7 @@ class BatchDiagnosisResponse(BaseModel):
     critical_count: int
 
 
-@router.post("/analyze", response_model=DiagnosisResponse)
+@router.post("/analyze", response_model=DiagnosisResponse, summary="차량 사운드 진단", description="차량 사운드 파일을 분석하여 상태와 문제를 진단합니다.")
 async def analyze_sound(
     file: UploadFile = File(...),
     return_all_probs: bool = False,
@@ -65,6 +65,8 @@ async def analyze_sound(
 ):
     """
     차량 사운드 파일 분석
+    
+    차량에서 녹음한 사운드 파일을 분석하여 브레이크, 엔진 공회전, 시동 상태의 이상 여부를 진단합니다.
     
     - **file**: WAV, MP3 등의 오디오 파일
     - **return_all_probs**: 모든 클래스의 확률 반환 여부
@@ -113,7 +115,7 @@ async def analyze_sound(
         )
 
 
-@router.post("/analyze/batch", response_model=BatchDiagnosisResponse)
+@router.post("/analyze/batch", response_model=BatchDiagnosisResponse, summary="사운드 파일 일괄 진단", description="여러 사운드 파일을 한 번에 분석하여 각 파일의 진단 결과와 통계를 제공합니다.")
 async def analyze_sounds_batch(
     files: List[UploadFile] = File(...),
     service: SoundDiagnosticService = Depends(get_diagnostic_service)
@@ -121,10 +123,12 @@ async def analyze_sounds_batch(
     """
     여러 사운드 파일 일괄 분석
     
+    여러 차량 사운드 파일을 한 번에 분석하여 각 파일의 진단 결과와 전체 통계를 제공합니다.
+    
     - **files**: 오디오 파일 목록
     
     Returns:
-        각 파일의 진단 결과 및 요약 통계
+        각 파일의 진단 결과 및 요약 통계 (정상/주의/위험 개수)
     """
     results = []
     normal_count = 0
@@ -179,18 +183,20 @@ async def analyze_sounds_batch(
     )
 
 
-@router.get("/model/info", response_model=ModelInfoResponse)
+@router.get("/model/info", response_model=ModelInfoResponse, summary="모델 정보 조회", description="현재 사용 중인 딥러닝 모델의 정보를 조회합니다.")
 async def get_model_info(
     service: SoundDiagnosticService = Depends(get_diagnostic_service)
 ):
     """
     현재 로드된 모델 정보 조회
+    
+    현재 사용 중인 딥러닝 모델의 타입, 디바이스, 클래스 수, 파라미터 수 등의 정보를 반환합니다.
     """
     info = service.get_model_info()
     return ModelInfoResponse(**info)
 
 
-@router.post("/model/load")
+@router.post("/model/load", summary="모델 로드/교체", description="새로운 딥러닝 모델을 로드하거나 기존 모델을 교체합니다.")
 async def load_model(
     model_path: str,
     model_type: str = "cnn",
@@ -199,6 +205,8 @@ async def load_model(
 ):
     """
     모델 로드/교체
+    
+    새로운 딥러닝 모델을 로드하거나 기존 모델을 다른 모델로 교체합니다.
     
     - **model_path**: 모델 파일 경로 (.pt)
     - **model_type**: 모델 타입 (cnn, crnn, attention)
@@ -215,12 +223,14 @@ async def load_model(
         )
 
 
-@router.get("/labels")
+@router.get("/labels", summary="지원 레이블 조회", description="모델이 지원하는 차량 상태 분류 레이블 목록을 조회합니다.")
 async def get_labels(
     service: SoundDiagnosticService = Depends(get_diagnostic_service)
 ):
     """
     지원하는 분류 레이블 목록 조회
+    
+    모델이 분류할 수 있는 차량 상태 레이블 목록과 각 레이블의 심각도 정보를 반환합니다.
     """
     return {
         "labels": list(service.idx_to_label.values()) if service.idx_to_label else [],

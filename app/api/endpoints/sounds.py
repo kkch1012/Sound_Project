@@ -10,7 +10,7 @@ from app.crud import sound as sound_crud
 router = APIRouter()
 
 
-@router.post("/upload", response_model=SoundResponse)
+@router.post("/upload", response_model=SoundResponse, summary="사운드 파일 업로드", description="사운드 파일을 AWS S3에 업로드하고 메타데이터를 데이터베이스에 저장합니다.")
 async def upload_sound(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -42,7 +42,7 @@ async def upload_sound(
     return sound
 
 
-@router.get("/", response_model=List[SoundResponse])
+@router.get("/", response_model=List[SoundResponse], summary="사운드 목록 조회", description="저장된 모든 사운드 파일의 목록을 조회합니다.")
 async def get_sounds(
     skip: int = 0,
     limit: int = 100,
@@ -53,7 +53,7 @@ async def get_sounds(
     return sounds
 
 
-@router.get("/{sound_id}", response_model=SoundResponse)
+@router.get("/{sound_id}", response_model=SoundResponse, summary="사운드 상세 조회", description="특정 사운드 파일의 상세 정보를 조회합니다.")
 async def get_sound(
     sound_id: int,
     db: AsyncSession = Depends(get_db),
@@ -65,7 +65,7 @@ async def get_sound(
     return sound
 
 
-@router.delete("/{sound_id}")
+@router.delete("/{sound_id}", summary="사운드 삭제", description="S3에 저장된 사운드 파일과 데이터베이스 레코드를 삭제합니다.")
 async def delete_sound(
     sound_id: int,
     db: AsyncSession = Depends(get_db),

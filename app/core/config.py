@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
     
     # PostgreSQL 데이터베이스 설정
-    POSTGRES_SERVER: str = "db"
+    # 로컬 개발: 127.0.0.1, Docker Compose: db
+    POSTGRES_SERVER: str = "127.0.0.1"
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "postgres"
     POSTGRES_DB: str = "sound_project"
@@ -23,7 +24,8 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
     
     # Redis 설정
-    REDIS_HOST: str = "redis"
+    # 로컬 개발: 127.0.0.1, Docker Compose: redis
+    REDIS_HOST: str = "127.0.0.1"
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: Optional[str] = None
     REDIS_DB: int = 0

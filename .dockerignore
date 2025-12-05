@@ -13,10 +13,14 @@ __pycache__/
 dist/
 build/
 
-# Virtual environments
-venv/
-env/
-ENV/
+# Virtual environments - 절대 경로로 명시
+/venv/
+venv/**
+/env/
+env/**
+/ENV/
+ENV/**
+/.venv
 .venv
 
 # IDE
@@ -40,25 +44,28 @@ notebooks/
 *.ipynb
 .ipynb_checkpoints
 
-# Data files (큰 파일들)
-data/
+# Data files (큰 파일들) - 절대 경로로 명시
+/data/
+data/**
 *.wav
 *.mp3
 *.flac
 *.ogg
+*.m4a
 
 # Checkpoints (이미지에 포함하지 않음, 볼륨으로 마운트)
-checkpoints/
+/checkpoints/
+checkpoints/**
 *.pt
 *.pth
 *.ckpt
+*.json
 
 # Logs
 logs/
 *.log
 
-# Docker
-Dockerfile*
+# Docker (Dockerfile은 필요하므로 제외하지 않음)
 docker-compose*.yml
 .dockerignore
 

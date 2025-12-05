@@ -14,13 +14,15 @@ from app.models.user import User
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, summary="회원가입", description="새로운 사용자를 등록합니다.")
 async def register(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
 ):
     """
     회원가입
+    
+    새로운 사용자 계정을 생성합니다. 이메일과 사용자명은 고유해야 합니다.
     
     - **email**: 사용자 이메일 (고유해야 함)
     - **username**: 사용자명 (고유해야 함)
@@ -36,13 +38,15 @@ async def register(
         )
 
 
-@router.post("/login", response_model=Token)
+@router.post("/login", response_model=Token, summary="로그인", description="이메일과 비밀번호로 로그인하여 JWT 토큰을 발급받습니다.")
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
     """
     로그인 (OAuth2 호환)
+    
+    이메일과 비밀번호를 사용하여 인증하고 JWT 액세스 토큰을 발급받습니다.
     
     **주의**: username 필드에 **이메일 주소**를 입력하세요.
     
@@ -74,7 +78,7 @@ async def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@router.post("/logout")
+@router.post("/logout", summary="로그아웃", description="현재 로그인한 사용자를 로그아웃합니다.")
 async def logout(
     current_user: User = Depends(get_current_active_user),
 ):
@@ -89,7 +93,7 @@ async def logout(
     return {"message": "로그아웃되었습니다"}
 
 
-@router.get("/me", response_model=UserResponse)
+@router.get("/me", response_model=UserResponse, summary="현재 사용자 정보 조회", description="현재 로그인한 사용자의 정보를 조회합니다.")
 async def read_users_me(
     current_user: User = Depends(get_current_active_user),
 ):
