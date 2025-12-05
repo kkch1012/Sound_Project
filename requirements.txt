@@ -19,6 +19,7 @@ boto3==1.34.34
 # pydantic-core는 Rust 컴파일이 필요하므로 미리 빌드된 wheel 사용
 pydantic>=2.6.1,<2.10.0
 pydantic-settings>=2.1.0
+email-validator>=2.0.0  # Email 필드 검증용
 
 # Authentication
 passlib[bcrypt]>=1.7.4
