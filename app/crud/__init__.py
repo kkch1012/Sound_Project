@@ -1,4 +1,4 @@
-from app.crud import sound
+from app.crud import sound, user
 
-__all__ = ["sound"]
+__all__ = ["sound", "user"]
 

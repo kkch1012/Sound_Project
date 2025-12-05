@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     SPECTROGRAM_HEIGHT: int = 128
     SPECTROGRAM_WIDTH: int = 216
     
+    # JWT 인증 설정
+    SECRET_KEY: str = "your-secret-key-change-this-in-production"  # .env에서 설정 권장
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
