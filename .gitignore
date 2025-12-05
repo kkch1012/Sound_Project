@@ -85,12 +85,18 @@ celerybeat-schedule
 
 # Environments
 .env
+.env.local
+.env.*.local
 .venv
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+
+# 환경 변수 파일 (보안)
+*.env
+!.env.example
 
 # Spyder project settings
 .spyderproject

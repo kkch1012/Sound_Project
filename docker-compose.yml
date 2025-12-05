@@ -19,14 +19,20 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=sound_project
       - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - AWS_REGION=${AWS_REGION:-ap-northeast-2}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - MODEL_PATH=${MODEL_PATH:-checkpoints/sound_classifier_best_model.pt}
       - MODEL_TYPE=${MODEL_TYPE:-cnn}
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-this-in-production}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - sound_network
@@ -47,6 +53,23 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
+      retries: 5
+    networks:
+      - sound_network
+
+  # Redis 캐시
+  redis:
+    image: redis:7-alpine
+    container_name: sound_project_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
     networks:
       - sound_network
@@ -90,3 +113,4 @@ networks:
 
 volumes:
   postgres_data:
+  redis_data:

@@ -14,10 +14,12 @@ FastAPI 기반의 API 서버로, 차량 소리를 분석하여 브레이크, 엔
 
 ## 기술 스택
 
-- **Backend**: FastAPI (Python 3.11)
+- **Backend**: FastAPI (Python 3.11+)
 - **ML/DL**: PyTorch, Librosa, Scikit-learn
 - **Database**: PostgreSQL 15
+- **Cache**: Redis 7
 - **Storage**: AWS S3
+- **Authentication**: JWT (OAuth2)
 - **Container**: Docker & Docker Compose
 
 ## 프로젝트 구조
@@ -72,20 +74,45 @@ Sound_Project/
 
 ### 1. 환경 변수 설정
 
-`env.example` 파일을 복사하여 `.env` 파일을 생성하고, AWS 자격 증명을 입력합니다.
+**⚠️ 중요: `.env` 파일은 절대 GitHub에 커밋하지 마세요!**
+
+`env.example` 파일을 복사하여 `.env` 파일을 생성하고, 필요한 설정을 입력합니다.
 
 ```bash
+# Windows
+copy env.example .env
+
+# Linux/Mac
 cp env.example .env
 ```
 
-`.env` 파일을 열어 AWS 설정을 입력합니다:
+`.env` 파일을 열어 다음 설정을 입력합니다:
 
 ```env
+# PostgreSQL (Docker Compose 사용 시 기본값 그대로 사용 가능)
+POSTGRES_SERVER=db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=sound_project
+
+# Redis (Docker Compose 사용 시 기본값 그대로 사용 가능)
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# AWS S3 (필수 - 음성 파일 저장용)
 AWS_ACCESS_KEY_ID=your_access_key_id
 AWS_SECRET_ACCESS_KEY=your_secret_access_key
 AWS_REGION=ap-northeast-2
 S3_BUCKET_NAME=your_bucket_name
+
+# JWT 인증 (필수 - 프로덕션에서는 반드시 강력한 비밀키 사용!)
+SECRET_KEY=your-very-secure-secret-key-here
 ```
+
+**보안 주의사항:**
+- `.env` 파일은 이미 `.gitignore`에 포함되어 있어 GitHub에 업로드되지 않습니다
+- 프로덕션 환경에서는 `SECRET_KEY`를 반드시 강력한 랜덤 문자열로 변경하세요
+- AWS 자격 증명은 최소 권한 원칙에 따라 필요한 권한만 부여하세요
 
 ### 2. Docker로 실행
 
@@ -112,13 +139,19 @@ docker-compose down
 ## API 엔드포인트
 
 ### Health Check
-- `GET /health` - 서버 상태 확인
+- `GET /api/v1/health` - 서버 상태 확인
+
+### Authentication (인증) 🔐
+- `POST /api/v1/auth/register` - 회원가입
+- `POST /api/v1/auth/login` - 로그인 (JWT 토큰 발급)
+- `POST /api/v1/auth/logout` - 로그아웃
+- `GET /api/v1/auth/me` - 현재 사용자 정보 조회
 
 ### Sounds (파일 관리)
-- `POST /api/v1/sounds/upload` - 사운드 파일 업로드
+- `POST /api/v1/sounds/upload` - 사운드 파일 업로드 (S3 저장)
 - `GET /api/v1/sounds/` - 사운드 목록 조회
 - `GET /api/v1/sounds/{sound_id}` - 특정 사운드 조회
-- `DELETE /api/v1/sounds/{sound_id}` - 사운드 삭제
+- `DELETE /api/v1/sounds/{sound_id}` - 사운드 삭제 (S3에서도 삭제)
 
 ### Diagnosis (차량 진단) 🆕
 - `POST /api/v1/diagnosis/analyze` - 단일 파일 진단
