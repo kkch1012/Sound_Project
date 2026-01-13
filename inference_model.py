@@ -83,39 +83,106 @@ class WaveformCNN1D(nn.Module):
         return x
 
 
-class MaskedCNN(nn.Module):
-    def __init__(self, num_classes: int, n_mels: int = 128, base_channels: int = 16, dropout: float = 0.4):
-        super().__init__()
-        self.num_classes = num_classes
+class CRNNMelSpectrogram(nn.Module):
+    """
+    멜 스펙트로그램을 위한 CRNN 모델
+    CNN으로 주파수 축의 공간적 특징 추출 + RNN으로 시간 축의 시퀀스 패턴 학습
+    """
+    
+    def __init__(
+        self,
+        num_classes: int,
+        n_mels: int = 128,
+        time_frames: int = 87,
+        base_channels: int = 64,
+        hidden_size: int = 128,
+        num_layers: int = 2,
+        dropout: float = 0.4,
+        rnn_type: str = 'LSTM',
+        bidirectional: bool = True
+    ):
+        super(CRNNMelSpectrogram, self).__init__()
         
+        self.num_classes = num_classes
+        self.n_mels = n_mels
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.bidirectional = bidirectional
+        self.rnn_type = rnn_type
+        
+        # ============================================================
+        # CNN 부분: 주파수 축의 공간적 특징 추출
+        # ============================================================
+        
+        # Conv Block 1: (n_mels, time_frames) -> (n_mels/2, time_frames/2)
         self.conv1 = nn.Sequential(
-            nn.Conv2d(1, base_channels, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(1, base_channels, kernel_size=(3, 3), padding=(1, 1)),
             nn.BatchNorm2d(base_channels),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Dropout(dropout / 3)
+            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            nn.Dropout2d(dropout / 3)
         )
         
+        # Conv Block 2: (n_mels/2, time_frames/2) -> (n_mels/4, time_frames/4)
         self.conv2 = nn.Sequential(
-            nn.Conv2d(base_channels, base_channels * 2, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(base_channels, base_channels * 2, kernel_size=(3, 3), padding=(1, 1)),
             nn.BatchNorm2d(base_channels * 2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Dropout(dropout / 3)
+            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            nn.Dropout2d(dropout / 3)
         )
         
+        # Conv Block 3: (n_mels/4, time_frames/4) -> (n_mels/8, time_frames/8)
         self.conv3 = nn.Sequential(
-            nn.Conv2d(base_channels * 2, base_channels * 4, kernel_size=3, stride=1, padding=1),
+            nn.Conv2d(base_channels * 2, base_channels * 4, kernel_size=(3, 3), padding=(1, 1)),
             nn.BatchNorm2d(base_channels * 4),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Dropout(dropout / 3)
+            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
+            nn.Dropout2d(dropout / 3)
         )
         
-        self.global_pool = nn.AdaptiveAvgPool2d(1)
+        # CNN 출력 차원 계산
+        self.cnn_output_features = base_channels * 4
+        self.cnn_output_time = time_frames // 8  # 3번의 MaxPool2d(2,2) 적용
+        self.cnn_output_freq = n_mels // 8
+        
+        # ============================================================
+        # RNN 부분: 시간적 패턴 학습
+        # ============================================================
+        
+        # CNN 출력을 RNN 입력 형태로 변환
+        rnn_input_size = self.cnn_output_features * self.cnn_output_freq
+        
+        if rnn_type.upper() == 'LSTM':
+            self.rnn = nn.LSTM(
+                input_size=rnn_input_size,
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                dropout=dropout if num_layers > 1 else 0,
+                bidirectional=bidirectional,
+                batch_first=True
+            )
+        elif rnn_type.upper() == 'GRU':
+            self.rnn = nn.GRU(
+                input_size=rnn_input_size,
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                dropout=dropout if num_layers > 1 else 0,
+                bidirectional=bidirectional,
+                batch_first=True
+            )
+        else:
+            raise ValueError(f"rnn_type must be 'LSTM' or 'GRU', got {rnn_type}")
+        
+        # RNN 출력 차원
+        rnn_output_size = hidden_size * 2 if bidirectional else hidden_size
+        
+        # ============================================================
+        # Fully Connected 부분: 중간 특징 추출 (256차원 출력)
+        # ============================================================
         
         self.fc1 = nn.Sequential(
-            nn.Linear(base_channels * 4, 256),
+            nn.Linear(rnn_output_size, 256),
             nn.BatchNorm1d(256),
             nn.ReLU(inplace=True),
             nn.Dropout(dropout)
@@ -131,15 +198,67 @@ class MaskedCNN(nn.Module):
         self.fc_out = nn.Linear(128, num_classes)
     
     def forward(self, x, mask=None):
+        """
+        Forward pass
+        
+        Args:
+            x: 입력 텐서 (batch, 1, n_mels, time_frames)
+            mask: 중요 영역 마스크 (batch, n_mels, time_frames) - 선택사항
+        
+        Returns:
+            output: 256차원 특징 벡터 (EnsembleVoteModel과 호환)
+        """
+        # 마스크 적용 (선택사항)
         if mask is not None:
+            # 마스크 shape 처리:
+            # - (1, n_mels, time_frames) -> (batch, 1, n_mels, time_frames)
+            # - (n_mels, time_frames) -> (batch, 1, n_mels, time_frames)
+            # - (batch, n_mels, time_frames) -> (batch, 1, n_mels, time_frames)
+            if mask.dim() == 2:  # (n_mels, time_frames)
+                mask = mask.unsqueeze(0).unsqueeze(0)  # (1, 1, n_mels, time_frames)
+            elif mask.dim() == 3:
+                if mask.size(0) == 1:  # (1, n_mels, time_frames) - importance_mask_tensor
+                    mask = mask.unsqueeze(1)  # (1, 1, n_mels, time_frames)
+                else:  # (batch, n_mels, time_frames)
+                    mask = mask.unsqueeze(1)  # (batch, 1, n_mels, time_frames)
+            
+            # 배치 차원 확장 (브로드캐스팅)
+            if mask.size(0) == 1 and x.size(0) > 1:
+                mask = mask.expand(x.size(0), -1, -1, -1)
+            
+            # 마스크 적용: 중요 영역 강조
             x = x * (1 + mask)
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.global_pool(x)
-        x = x.view(x.size(0), -1)
-        x = self.fc1(x)
-        return x
+        
+        # ============================================================
+        # CNN: 공간적 특징 추출
+        # ============================================================
+        x = self.conv1(x)  # (batch, base_channels, n_mels/2, time_frames/2)
+        x = self.conv2(x)  # (batch, base_channels*2, n_mels/4, time_frames/4)
+        x = self.conv3(x)  # (batch, base_channels*4, n_mels/8, time_frames/8)
+        
+        # ============================================================
+        # CNN 출력을 RNN 입력 형태로 변환
+        # ============================================================
+        # (batch, channels, freq, time) -> (batch, time, channels * freq)
+        batch_size = x.size(0)
+        x = x.permute(0, 3, 1, 2)  # (batch, time, channels, freq)
+        x = x.contiguous().view(batch_size, x.size(1), -1)  # (batch, time, channels * freq)
+        
+        # ============================================================
+        # RNN: 시간적 패턴 학습
+        # ============================================================
+        rnn_out, _ = self.rnn(x)  # (batch, time, hidden_size * directions)
+        
+        # 마지막 시간 스텝의 출력 사용
+        rnn_out = rnn_out[:, -1, :]  # (batch, hidden_size * directions)
+        
+        # ============================================================
+        # Fully Connected: 중간 특징 추출 (256차원 출력)
+        # ============================================================
+        x = self.fc1(rnn_out)  # (batch, 256)
+        # fc2와 fc_out은 EnsembleVoteModel의 final_fc에서 처리
+        
+        return x  # 256차원 출력 반환 (EnsembleVoteModel과 호환)
 
 
 class MFCCCCNN(nn.Module):
@@ -202,7 +321,18 @@ class EnsembleVoteModel(nn.Module):
         mfcc_out_dim = 256
         
         self.wf_model = WaveformCNN1D(num_classes=wf_out_dim, base_channels=base_channels_wf) 
-        self.mel_model = MaskedCNN(num_classes=mel_out_dim, base_channels=base_channels_mel) 
+        # 🌟 CRNN 모델 사용 (기존 MaskedCNN 대신)
+        self.mel_model = CRNNMelSpectrogram(
+            num_classes=mel_out_dim,
+            n_mels=128,
+            time_frames=time_frames,
+            base_channels=base_channels_mel,
+            hidden_size=128,
+            num_layers=2,
+            dropout=0.4,
+            rnn_type='LSTM',
+            bidirectional=True
+        )
         self.mfcc_model = MFCCCCNN(num_classes=mfcc_out_dim, num_mfcc_coeffs=num_mfcc_coeffs, time_frames=time_frames, base_channels=base_channels_mfcc) 
         
         total_input_dim = wf_out_dim + mel_out_dim + mfcc_out_dim

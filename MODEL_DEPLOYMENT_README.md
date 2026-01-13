@@ -97,9 +97,11 @@ python inference_model.py --audio_path "audio.wav" --model_path "best_ensemble_m
 
 - **입력 오디오 길이**: 2초
 - **Sample Rate**: 22050 Hz
-- **Mel Spectrogram**: 128 mel bins, 87 time frames
-- **MFCC**: 20 coefficients, 87 time frames
+- **Waveform**: 1D CNN (시간적 패턴 학습)
+- **Mel Spectrogram**: CRNN (CNN + LSTM, 주파수-시간 패턴 학습) 🌟
+- **MFCC**: 2D CNN (주파수-시간 패턴 학습)
 - **분류 클래스**: 4개 (low_oil, normal_engine_idle, power_steering, serpentine_belt)
+- **모델 구조**: 3-경로 앙상블 (Waveform + Mel Spectrogram CRNN + MFCC)
 
 ---
 
@@ -260,5 +262,6 @@ else:
 
 - 두 모델 모두 앙상블 구조를 사용합니다
 - 상태 분류 모델: Waveform CNN + Mel Spectrogram CNN
-- 컬럼 분류 모델: Waveform CNN + Mel Spectrogram CNN + MFCC CNN
+- 컬럼 분류 모델: Waveform CNN + Mel Spectrogram CRNN + MFCC CNN 🌟
 - 모든 모델은 PyTorch로 구현되었습니다
+- 컬럼 분류 모델의 Mel Spectrogram은 CRNN(CNN + LSTM)을 사용하여 시간적 패턴을 더 잘 학습합니다
